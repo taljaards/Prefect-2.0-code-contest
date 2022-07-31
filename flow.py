@@ -34,9 +34,13 @@ def perform_request(prompt: str) -> requests.Response:
     return post
 
 
-def concat_images(images: [bytes]) -> Image:
-    # Open images and resize them
+def get_images_from_response(response: requests.Response) -> list[Image]:
+    # Convert bytes to images
+    images_bytes = [base64.b64decode(image) for image in response.json()["images"]]
+    return [Image.open(io.BytesIO(b)) for b in images_bytes]
 
+
+def combine_images(images: list[Image]) -> Image:
     width, height = images[0].size  # Assume all images have the same size
     shape = (3, 3)
 
@@ -51,14 +55,8 @@ def concat_images(images: [bytes]) -> Image:
     return image
 
 
-def combine_images(response_json: dict):
-    # Convert bytes to images
-    images_bytes = [base64.b64decode(image) for image in response_json["images"]]
-    images = [Image.open(io.BytesIO(b)) for b in images_bytes]
-
-    # Create and save image grid
-    image = concat_images(images)
-    image.save("image.png", "PNG")
+def save_image(image: Image, file_name: str = "image.png"):
+    image.save(file_name, "PNG")
 
 
 def main():
@@ -66,7 +64,9 @@ def main():
     response = perform_request(prompt)
 
     if response.status_code == 200:
-        combine_images(response.json())
+        images = get_images_from_response(response)
+        image = combine_images(images)
+        save_image(image)
 
     else:
         print(f"Bad response: {response.status_code}")
