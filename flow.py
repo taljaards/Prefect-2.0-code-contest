@@ -54,14 +54,13 @@ def combine_images(images: list[Image]) -> Image:
             image.paste(images[idx], offset)
     return image
 
-def add_border_and_prompt(image: Image, prompt: str) -> Image:
-    image = ImageOps.expand(image, border=45, fill=(9, 4, 34))
+
+def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> Image:
+    image = ImageOps.expand(image, border=border_size, fill=(9, 4, 34))
     draw = ImageDraw.Draw(image)
     font = ImageFont.truetype("FONTS/arial.ttf", 36)
-    w, h = draw.textsize(prompt, font=font)
-    draw.text(((image.size[0] - w) / 2, 0), prompt, (2, 77, 253), font=font)
+    draw.text((image.size[0] / 2, border_size / 2), prompt, (2, 77, 253), font=font, anchor="mm")
     return image
-
 
 
 def save_image(image: Image, file_name: str = "image.png"):
