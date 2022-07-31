@@ -2,7 +2,7 @@ import base64
 import io
 
 import requests
-from PIL import Image
+from PIL import Image, ImageFont, ImageDraw, ImageOps
 
 
 def get_prompt() -> str:
@@ -54,6 +54,15 @@ def combine_images(images: list[Image]) -> Image:
             image.paste(images[idx], offset)
     return image
 
+def add_border_and_prompt(image: Image, prompt: str) -> Image:
+    image = ImageOps.expand(image, border=45, fill=(9, 4, 34))
+    draw = ImageDraw.Draw(image)
+    font = ImageFont.truetype("FONTS/arial.ttf", 36)
+    w, h = draw.textsize(prompt, font=font)
+    draw.text(((image.size[0] - w) / 2, 0), prompt, (2, 77, 253), font=font)
+    return image
+
+
 
 def save_image(image: Image, file_name: str = "image.png"):
     image.save(file_name, "PNG")
@@ -66,6 +75,7 @@ def main():
     if response.status_code == 200:
         images = get_images_from_response(response)
         image = combine_images(images)
+        image = add_border_and_prompt(image, prompt)
         save_image(image)
 
     else:
