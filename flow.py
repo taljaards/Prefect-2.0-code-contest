@@ -3,12 +3,15 @@ import io
 
 import requests
 from PIL import Image, ImageFont, ImageDraw, ImageOps
+from prefect import task, flow
 
 
+@task
 def get_prompt() -> str:
     return "chocolate toad"
 
 
+@task
 def perform_request(prompt: str) -> requests.Response:
     print("Starting request")
     headers = {
@@ -34,12 +37,14 @@ def perform_request(prompt: str) -> requests.Response:
     return post
 
 
+@task
 def get_images_from_response(response: requests.Response) -> list[Image]:
     # Convert bytes to images
     images_bytes = [base64.b64decode(image) for image in response.json()["images"]]
     return [Image.open(io.BytesIO(b)) for b in images_bytes]
 
 
+@task
 def combine_images(images: list[Image]) -> Image:
     width, height = images[0].size  # Assume all images have the same size
     shape = (3, 3)
@@ -55,6 +60,7 @@ def combine_images(images: list[Image]) -> Image:
     return image
 
 
+@task
 def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> Image:
     image = ImageOps.expand(image, border=border_size, fill=(9, 4, 34))
     draw = ImageDraw.Draw(image)
@@ -63,10 +69,12 @@ def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> I
     return image
 
 
+@task
 def save_image(image: Image, file_name: str = "image.png"):
     image.save(file_name, "PNG")
 
 
+@flow
 def main():
     prompt = get_prompt()
     response = perform_request(prompt)
