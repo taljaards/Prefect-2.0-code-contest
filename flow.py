@@ -70,8 +70,8 @@ def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> I
 
 
 @task
-def save_image(image: Image, file_name: str = "image.png"):
-    image.save(file_name, "PNG")
+def save_image(image: Image, file_name: str):
+    image.save(f"{file_name}.png", "PNG")
 
 
 @flow
@@ -83,7 +83,7 @@ def main():
         images = get_images_from_response(response)
         image = combine_images(images)
         image = add_border_and_prompt(image, prompt)
-        save_image(image)
+        save_image(image, prompt)
 
     else:
         print(f"Bad response: {response.status_code}")
