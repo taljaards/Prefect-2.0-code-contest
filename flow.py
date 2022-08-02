@@ -96,7 +96,7 @@ def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> I
 
 @task
 def save_image(image: Image, file_name: str):
-    image.save(f"{file_name}.png", "PNG")
+    image.save(f"images/{file_name}.png", "PNG")
 
 
 @flow
