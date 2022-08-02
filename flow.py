@@ -2,8 +2,8 @@ import base64
 import io
 
 import requests
-from PIL import Image, ImageFont, ImageDraw, ImageOps
-from prefect import task, flow
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from prefect import flow, task
 from prefect.client import get_client
 from prefect.orion.schemas.filters import FlowFilter
 from prefect.orion.schemas.sorting import FlowRunSort
@@ -18,10 +18,7 @@ async def get_flow_names(flow_name: str = None, limit: int = 15):
             sort=FlowRunSort.EXPECTED_START_TIME_DESC,
         )
 
-    flow_run_names = [
-        flow_run.name
-        for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)
-    ]
+    flow_run_names = [flow_run.name for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)]
     print(flow_run_names)
     return flow_run_names
 
