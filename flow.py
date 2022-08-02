@@ -120,8 +120,8 @@ def save_image(image: Image, file_name: str):
     image.save(f"images/{file_name}.png", "PNG")
 
 
-@flow
-def main():
+@flow(name="Generate Craiyon images")
+def craiyon_flow():
     flow_run_names = get_flow_names.submit(limit=5)
     prompt_futures = clean_flow_run_names.map(flow_run_names)  # TODO: Backup prompt
 
@@ -142,4 +142,5 @@ def main():
             print(f"Bad response: {response.status_code}")
 
 
-main()
+if __name__ == "__main__":
+    craiyon_flow()
