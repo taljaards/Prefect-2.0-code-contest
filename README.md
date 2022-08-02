@@ -18,3 +18,8 @@ Though not really identifying any Prefect edge cases, it's an example of using:
 - Interacting with the API
 - Caching
 - Task concurrency limits
+
+---
+
+Most outputs come out "normal", Craiyon cannot always figure out how to match the adjectives to the animals. Now and then surprises pop up, for example [_classic scorpion_](https://i.lensdump.com/i/t5ndFx.png?open=true).
+More examples are available here: https://lensdump.com/a/1FZ4C
