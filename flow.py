@@ -1,5 +1,6 @@
 import base64
 import io
+from pathlib import Path
 
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageOps
@@ -129,7 +130,9 @@ def add_border_and_text(image: Image, prompt: str, border_size: int = 45) -> Ima
 
 @task
 def save_image(image: Image, file_name: str):
-    image_file_path = f"images/{file_name}.png"
+    images_dir = Path("images")
+    images_dir.mkdir(exist_ok=True)
+    image_file_path = (images_dir / file_name).with_suffix(".png")
     image.save(image_file_path, "PNG")
     get_run_logger().info(f"Saved image to {image_file_path}")
 
