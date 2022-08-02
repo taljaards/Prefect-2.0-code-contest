@@ -125,20 +125,24 @@ def save_image(image: Image, file_name: str):
 
 @flow
 def main():
-    flow_run_names = get_flow_names(limit=5)
-    prompts = clean_flow_run_names.map(flow_run_names)
+    flow_run_names = get_flow_names.submit(limit=5)
+    prompt_futures = clean_flow_run_names.map(flow_run_names)  # TODO: Backup prompt
 
-    prompt = get_prompt()
-    response = perform_request(prompt)
+    responses_futures = perform_request.map(prompt_futures)
 
-    if response.status_code == 200:
-        images = get_images_from_response(response)
-        image = combine_images(images)
-        image = add_border_and_prompt(image, prompt)
-        save_image(image, prompt)
+    for response_f, prompt_f in zip(responses_futures, prompt_futures):
+        response = response_f.result()
 
-    else:
-        print(f"Bad response: {response.status_code}")
+        if response.status_code == 200:
+            prompt = prompt_f.result()
+
+            images = get_images_from_response.submit(response)
+            image = combine_images.submit(images)
+            image = add_border_and_prompt.submit(image, prompt)
+            save_image.submit(image, prompt)
+
+        else:
+            print(f"Bad response: {response.status_code}")
 
 
 main()
