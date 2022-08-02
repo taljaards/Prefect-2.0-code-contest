@@ -7,6 +7,7 @@ from prefect import flow, get_run_logger, task
 from prefect.client import get_client
 from prefect.orion.schemas.filters import FlowFilter
 from prefect.orion.schemas.sorting import FlowRunSort
+from prefect.tasks import task_input_hash
 
 
 @task
@@ -39,7 +40,9 @@ def get_prompt() -> str:
     return "chocolate toad"
 
 
-@task
+# The tag allows setting a task run concurrency limit to prevent hitting Craiyon too hard
+# Run:  prefect concurrency-limit create craiyon_request 3
+@task(cache_key_fn=task_input_hash, tags=["craiyon_request"])
 def perform_request(prompt: str) -> requests.Response:
     logger = get_run_logger()
     logger.info(f"Starting request ({prompt})")
