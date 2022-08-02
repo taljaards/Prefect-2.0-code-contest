@@ -3,7 +3,7 @@ import io
 
 import requests
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from prefect import flow, task
+from prefect import flow, get_run_logger, task
 from prefect.client import get_client
 from prefect.orion.schemas.filters import FlowFilter
 from prefect.orion.schemas.sorting import FlowRunSort
@@ -19,7 +19,7 @@ async def get_flow_names(flow_name: str = None, limit: int = 15):
         )
 
     flow_run_names = [flow_run.name for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)]
-    print(flow_run_names)
+    get_run_logger().info(f"Got {limit} recent flow run names: {flow_run_names}")
     return flow_run_names
 
 
@@ -35,7 +35,9 @@ def get_prompt() -> str:
 
 @task
 def perform_request(prompt: str) -> requests.Response:
-    print("Starting request")
+    logger = get_run_logger()
+    logger.info(f"Starting request ({prompt})")
+
     headers = {
         "authority": "backend.craiyon.com",
         "accept": "application/json",
@@ -55,7 +57,8 @@ def perform_request(prompt: str) -> requests.Response:
     json_data = {"prompt": prompt}
 
     post = requests.post("https://backend.craiyon.com/generate", headers=headers, json=json_data)
-    print("Request done")
+
+    logger.info(f"Request complete ({prompt})")
     return post
 
 
@@ -117,7 +120,9 @@ def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> I
 
 @task
 def save_image(image: Image, file_name: str):
-    image.save(f"images/{file_name}.png", "PNG")
+    image_file_path = f"images/{file_name}.png"
+    image.save(image_file_path, "PNG")
+    get_run_logger().info(f"Saved image to {image_file_path}")
 
 
 @flow(name="Generate Craiyon images")
@@ -129,17 +134,16 @@ def craiyon_flow():
 
     for response_f, prompt_f in zip(responses_futures, prompt_futures):
         response = response_f.result()
+        prompt = prompt_f.result()
 
         if response.status_code == 200:
-            prompt = prompt_f.result()
-
             images = get_images_from_response.submit(response)
             image = combine_images.submit(images)
             image = add_border_and_prompt.submit(image, prompt)
             save_image.submit(image, prompt)
 
         else:
-            print(f"Bad response: {response.status_code}")
+            get_run_logger().info(f"Bad response for {prompt}: {response.status_code}")
 
 
 if __name__ == "__main__":
