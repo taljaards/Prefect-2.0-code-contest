@@ -24,7 +24,7 @@ async def get_flow_names(flow_name: str = None, limit: int = 15):
 
 
 @task
-def clean_flow_run_names(flow_run_name: str) -> str:
+def clean_flow_run_name(flow_run_name: str) -> str:
     return flow_run_name.replace("-", " ")
 
 
@@ -86,7 +86,7 @@ def combine_images(images: list[Image]) -> Image:
 
 
 @task
-def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> Image:
+def add_border_and_text(image: Image, prompt: str, border_size: int = 45) -> Image:
     prefect_blue = (2, 77, 253)
     prefect_navy = (9, 4, 34)
 
@@ -128,7 +128,7 @@ def save_image(image: Image, file_name: str):
 @flow(name="Generate Craiyon images")
 def craiyon_flow():
     flow_run_names = get_flow_names.submit(limit=5)
-    prompt_futures = clean_flow_run_names.map(flow_run_names)  # TODO: Backup prompt
+    prompt_futures = clean_flow_run_name.map(flow_run_names)  # TODO: Backup prompt
 
     responses_futures = perform_request.map(prompt_futures)
 
@@ -139,7 +139,7 @@ def craiyon_flow():
         if response.status_code == 200:
             images = get_images_from_response.submit(response)
             image = combine_images.submit(images)
-            image = add_border_and_prompt.submit(image, prompt)
+            image = add_border_and_text.submit(image, prompt)
             save_image.submit(image, prompt)
 
         else:
