@@ -63,10 +63,7 @@ def perform_request(prompt: str) -> requests.Response:
 
 
 @task
-def get_images_from_response(response: requests.Response) -> Union[None, list[Image]]:
-    if response.status_code != 200:
-        return None
-
+def get_images_from_response(response: requests.Response) -> list[Image]:
     # Convert bytes to images
     images_bytes = [base64.b64decode(image) for image in response.json()["images"]]
     return [Image.open(io.BytesIO(b)) for b in images_bytes]
@@ -134,8 +131,8 @@ def main():
     prompt = get_prompt()
     response = perform_request(prompt)
 
-    images = get_images_from_response(response)
-    if images:
+    if response.status_code == 200:
+        images = get_images_from_response(response)
         image = combine_images(images)
         image = add_border_and_prompt(image, prompt)
         save_image(image, prompt)
