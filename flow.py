@@ -4,6 +4,31 @@ import io
 import requests
 from PIL import Image, ImageFont, ImageDraw, ImageOps
 from prefect import task, flow
+from prefect.client import get_client
+from prefect.orion.schemas.filters import FlowFilter
+from prefect.orion.schemas.sorting import FlowRunSort
+
+
+@task
+async def get_flow_names(flow_name: str = None, limit: int = 15):
+    async with get_client() as client:
+        flow_runs = await client.read_flow_runs(
+            flow_filter=FlowFilter(name={"any_": flow_name}) if flow_name else None,
+            limit=limit,
+            sort=FlowRunSort.EXPECTED_START_TIME_DESC,
+        )
+
+    flow_run_names = [
+        flow_run.name
+        for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)
+    ]
+    print(flow_run_names)
+    return flow_run_names
+
+
+@task
+def clean_flow_run_names(flow_run_name: str) -> str:
+    return flow_run_name.replace("-", " ")
 
 
 @task
@@ -76,6 +101,9 @@ def save_image(image: Image, file_name: str):
 
 @flow
 def main():
+    flow_run_names = get_flow_names(limit=5)
+    prompts = clean_flow_run_names.map(flow_run_names)
+
     prompt = get_prompt()
     response = perform_request(prompt)
 
