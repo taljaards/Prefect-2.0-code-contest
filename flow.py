@@ -10,17 +10,23 @@ from prefect.orion.schemas.sorting import FlowRunSort
 
 
 @task
-async def get_flow_names(flow_name: str = None, limit: int = 15):
-    async with get_client() as client:
-        flow_runs = await client.read_flow_runs(
-            flow_filter=FlowFilter(name={"any_": flow_name}) if flow_name else None,
-            limit=limit,
-            sort=FlowRunSort.EXPECTED_START_TIME_DESC,
-        )
+async def get_flow_names(flow_name: str = None, limit: int = 15) -> list[str]:
+    try:
+        async with get_client() as client:
+            flow_runs = await client.read_flow_runs(
+                flow_filter=FlowFilter(name={"any_": flow_name}) if flow_name else None,
+                limit=limit,
+                sort=FlowRunSort.EXPECTED_START_TIME_DESC,
+            )
 
-    flow_run_names = [flow_run.name for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)]
-    get_run_logger().info(f"Got {limit} recent flow run names: {flow_run_names}")
-    return flow_run_names
+        flow_run_names = [flow_run.name for flow_run in sorted(flow_runs, key=lambda d: d.created, reverse=True)]
+        get_run_logger().info(f"Got {limit} recent flow run names: {flow_run_names}")
+        return flow_run_names
+
+    except Exception:  # noqa
+        # Return backup prompt
+        # Though this should probably be inside the flow itself
+        return [get_prompt.fn()]
 
 
 @task
@@ -128,7 +134,7 @@ def save_image(image: Image, file_name: str):
 @flow(name="Generate Craiyon images")
 def craiyon_flow():
     flow_run_names = get_flow_names.submit(limit=5)
-    prompt_futures = clean_flow_run_name.map(flow_run_names)  # TODO: Backup prompt
+    prompt_futures = clean_flow_run_name.map(flow_run_names)
 
     responses_futures = perform_request.map(prompt_futures)
 
