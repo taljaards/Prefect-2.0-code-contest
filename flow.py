@@ -87,10 +87,34 @@ def combine_images(images: list[Image]) -> Image:
 
 @task
 def add_border_and_prompt(image: Image, prompt: str, border_size: int = 45) -> Image:
-    image = ImageOps.expand(image, border=border_size, fill=(9, 4, 34))
+    prefect_blue = (2, 77, 253)
+    prefect_navy = (9, 4, 34)
+
+    image = ImageOps.expand(image, border=border_size, fill=prefect_navy)
     draw = ImageDraw.Draw(image)
-    font = ImageFont.truetype("FONTS/arial.ttf", 36)
-    draw.text((image.size[0] / 2, border_size / 2), prompt, (2, 77, 253), font=font, anchor="mm")
+
+    image_width, image_height = image.size
+    h_center = image_width / 2
+
+    font = "FONTS/arial.ttf"
+
+    # Add prompt
+    draw.text(
+        (h_center, border_size / 2),
+        prompt,
+        prefect_blue,
+        font=ImageFont.truetype(font, 36),
+        anchor="mm",
+    )
+
+    # Add attribution
+    draw.text(
+        (h_center, image_height - border_size / 2),
+        "Generated using craiyon.com",
+        prefect_blue,
+        font=ImageFont.truetype(font, 20),
+        anchor="mm",
+    )
     return image
 
 
