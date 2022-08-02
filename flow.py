@@ -21,7 +21,7 @@ async def get_flow_names(flow_name: str = None, limit: int = 15) -> list[str]:
             )
 
         flow_run_names = [flow_run.name for flow_run in flow_runs]
-        get_run_logger().info(f"Got {limit} recent flow run names: {flow_run_names}")
+        get_run_logger().info(f"Got {len(flow_run_names)} recent flow run names: {flow_run_names}")
         return flow_run_names
 
     except Exception:  # noqa
